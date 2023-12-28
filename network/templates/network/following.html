@@ -1,0 +1,98 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+
+    <div id="all_posts_view">
+        {% for post in page_obj %}
+            <div class="border" style="padding: 20px;">
+                <a href="{% url 'profile' post.user.id %}"><h4>{{post.user}}</h4></a>
+                <p>{{post.content}}</p>
+                <p>{{post.timestamp}}</p>
+                {% if post.id in likes %}
+                    <div>
+                        <button class="btn btn-primary fa fa-thumbs-down" id="{{post.id}}" onclick='like({{post.id}})'></button>
+                        <p id="p-{{post.id}}">{{post.likes.count}}</p>
+                    </div>
+                {% else %}
+                    <div>
+                        <button class="btn btn-primary fa fa-thumbs-up" id="{{post.id}}" onclick='like({{post.id}})'></button>
+                        <p id="p-{{post.id}}">{{post.likes.count}}</p>
+                    </div>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.id == post.user.id %}
+                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#edit_modal_{{post.id}}">
+                        Edit
+                    </button>
+                    <div class="modal fade" id="edit_modal_{{post.id}}" tabindex="-1" role="dialog" aria-labelledby="edit_modal_{{post.id}}_label" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="exampleModalLabel">Edit Post</h5>
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                            </div>
+                            <div class="modal-body">
+                              <textarea name="content" id="content_textarea_{{post.id}}" cols="60" rows="10">{{post.content}}</textarea>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-primary" onclick="submitEdit({{post.id}})">Save changes</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                {% endif %}
+                
+                
+            </div>
+        {% endfor %}
+    </div>
+        <div class="pagination d-flex align-items-center justify-content-center" style="font-size: 24px;">
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous: {{ page_obj.previous_page_number }}</a></li>
+                    {% endif %}
+                    
+                  {% if page_obj.has_next %}
+                  <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next: {{ page_obj.next_page_number }}</a></li>
+                    {% endif %}
+                </ul>
+              </nav>
+        </div>
+{% endblock %}
+
+
+{% block script %}
+    <script>
+        
+        function like(id)
+        {
+            const btn = document.getElementById(`${id}`)
+            let nums = document.getElementById(`p-${id}`)
+            btn.classList.remove('fa-thumbs-down')
+            btn.classList.remove('fa-thumbs-up')
+            fetch(`/like/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if(data["check"] == 1)
+                {
+                    btn.classList.add('fa-thumbs-down');
+                }
+                else if(data["check"] == 0)
+                {
+                    btn.classList.add('fa-thumbs-up');
+                }
+                else
+                {
+                    alert("You need to log in!")
+                }
+                nums.innerText = data["likes_count"]
+                console.log(nums.innerHTML)
+
+            });
+            
+        }
+    </script>
+{% endblock %}
